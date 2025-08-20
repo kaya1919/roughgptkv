@@ -1,0 +1,2 @@
+change the name from roughGPT to rough-man
+Store the API key somewhere and use it to validate whether a connection is already there in the main page
