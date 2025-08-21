@@ -19,20 +19,22 @@
 	// Notes state with enhanced structure
 	let notes = $state([]);
 	let tasks = $state([]);
+	let deletedItems = $state([]); // Recently deleted items
 	
 	// UI state
 	let searchQuery = $state('');
 	let selectedCategory = $state('All');
 	let showAddForm = $state(false);
 	let showProfileEdit = $state(false);
-	let viewMode = $state('grid'); // 'grid' or 'list'
+	let showDeletedItems = $state(false);
+	let viewMode = $state('grid');
 	
 	// New note form
 	let newNote = $state({ 
 		title: '', 
 		content: '', 
 		category: 'personal',
-		type: 'note', // 'note' or 'task'
+		type: 'note',
 		isCompleted: false,
 		priority: 'medium'
 	});
@@ -148,14 +150,54 @@
 		saveData();
 	}
 
-	// Delete note/task
+	// Delete note/task with recently deleted functionality
 	function deleteItem(id, type) {
+		let deletedItem;
+		
 		if (type === 'task') {
-			tasks = tasks.filter(task => task.id !== id);
+			const taskIndex = tasks.findIndex(task => task.id === id);
+			if (taskIndex > -1) {
+				deletedItem = { ...tasks[taskIndex], type: 'task', deletedAt: new Date() };
+				tasks = tasks.filter(task => task.id !== id);
+			}
 		} else {
-			notes = notes.filter(note => note.id !== id);
+			const noteIndex = notes.findIndex(note => note.id === id);
+			if (noteIndex > -1) {
+				deletedItem = { ...notes[noteIndex], type: 'note', deletedAt: new Date() };
+				notes = notes.filter(note => note.id !== id);
+			}
 		}
-		userProfile.totalNotes = Math.max(0, userProfile.totalNotes - 1);
+
+		if (deletedItem) {
+			deletedItems = [deletedItem, ...deletedItems].slice(0, 20); // Keep only last 20
+			userProfile.totalNotes = Math.max(0, userProfile.totalNotes - 1);
+		}
+		
+		saveData();
+	}
+
+	// Restore from recently deleted
+	function restoreItem(id) {
+		const itemIndex = deletedItems.findIndex(item => item.id === id);
+		if (itemIndex > -1) {
+			const item = deletedItems[itemIndex];
+			const { deletedAt, ...restoredItem } = item;
+			
+			if (item.type === 'task') {
+				tasks = [...tasks, restoredItem];
+			} else {
+				notes = [...notes, restoredItem];
+			}
+			
+			deletedItems = deletedItems.filter(item => item.id !== id);
+			userProfile.totalNotes += 1;
+			saveData();
+		}
+	}
+
+	// Permanently delete from recently deleted
+	function permanentlyDelete(id) {
+		deletedItems = deletedItems.filter(item => item.id !== id);
 		saveData();
 	}
 
@@ -163,6 +205,7 @@
 	function saveData() {
 		localStorage.setItem('mindnotes-notes', JSON.stringify(notes));
 		localStorage.setItem('mindnotes-tasks', JSON.stringify(tasks));
+		localStorage.setItem('mindnotes-deleted', JSON.stringify(deletedItems));
 		localStorage.setItem('mindnotes-profile', JSON.stringify(userProfile));
 	}
 
@@ -170,6 +213,7 @@
 	function loadData() {
 		const savedNotes = localStorage.getItem('mindnotes-notes');
 		const savedTasks = localStorage.getItem('mindnotes-tasks');
+		const savedDeleted = localStorage.getItem('mindnotes-deleted');
 		const savedProfile = localStorage.getItem('mindnotes-profile');
 		const savedStreak = localStorage.getItem('userStreak');
 		
@@ -179,6 +223,10 @@
 		
 		if (savedTasks) {
 			tasks = JSON.parse(savedTasks);
+		}
+		
+		if (savedDeleted) {
+			deletedItems = JSON.parse(savedDeleted);
 		}
 		
 		if (savedProfile) {
@@ -235,7 +283,7 @@
 			plus: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"><path d="M19 13H13V19C13 19.55 12.55 20 12 20S11 19.55 11 19V13H5C4.45 13 4 12.55 4 12S4.45 11 5 11H11V5C11 4.45 11.45 4 12 4S13 4.45 13 5V11H19C19.55 11 20 11.45 20 12S19.55 13 19 13Z" fill="currentColor"/></svg>`,
 			check: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"><path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="currentColor"/></svg>`,
 			trash: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"><path d="M6 19C6 20.1 6.9 21 8 21H16C17.1 21 18 20.1 18 19V7H6V19ZM19 4H15.5L14.5 3H9.5L8.5 4H5V6H19V4Z" fill="currentColor"/></svg>`,
-			edit: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"><path d="M3 17.25V21H6.75L17.81 9.94L14.06 6.19L3 17.25ZM20.71 7.04C21.1 6.65 21.1 6.02 20.71 5.63L18.37 3.29C17.98 2.9 17.35 2.9 16.96 3.29L15.13 5.12L18.88 8.87L20.71 7.04Z" fill="currentColor"/></svg>`,
+			restore: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"><path d="M12 5V1L7 6L12 11V7C15.31 7 18 9.69 18 13S15.31 19 12 19S6 16.31 6 13H4C4 17.42 7.58 21 12 21S20 17.42 20 13S16.42 5 12 5Z" fill="currentColor"/></svg>`,
 			fire: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"><path d="M13.5 0.67S10.04 3.15 10.04 6.5C10.04 7.41 10.54 8.23 11.34 8.65C11.56 8.77 11.8 8.84 12.04 8.84C13.14 8.84 14.04 7.94 14.04 6.84C14.04 6.64 14 6.44 13.92 6.26C13.92 6.26 13.5 5.26 13.5 4.84S13.92 4.42 13.92 4.42C13.92 4.42 15.5 2.67 15.5 0.67C15.5 0.3 15.2 0 14.83 0H14.17C13.8 0 13.5 0.3 13.5 0.67Z" fill="currentColor"/></svg>`
 		};
 		return icons[iconName] || icons.brain;
@@ -248,7 +296,7 @@
 		calculateStreak();
 		
 		// Auto-save periodically
-		const saveInterval = setInterval(saveData, 30000); // Save every 30 seconds
+		const saveInterval = setInterval(saveData, 30000);
 		
 		return () => {
 			clearInterval(saveInterval);
@@ -293,6 +341,17 @@
 				>
 					{@html getIcon('plus', 20)}
 					Add Note
+				</button>
+				
+				<button 
+					class="deleted-btn secondary"
+					onclick={() => showDeletedItems = !showDeletedItems}
+					title="Recently Deleted"
+				>
+					{@html getIcon('trash', 20)}
+					{#if deletedItems.length > 0}
+						<span class="deleted-count">{deletedItems.length}</span>
+					{/if}
 				</button>
 			</div>
 		</div>
@@ -352,14 +411,14 @@
 				></textarea>
 				
 				<div class="form-row">
-					<select bind:value={newNote.category} class="form-select">
+					<select bind:value={newNote.category} class="form-select black-text">
 						{#each categories.slice(1) as category}
 							<option value={category.id}>{category.name}</option>
 						{/each}
 					</select>
 					
 					{#if newNote.type === 'task'}
-						<select bind:value={newNote.priority} class="form-select">
+						<select bind:value={newNote.priority} class="form-select black-text">
 							<option value="low">Low Priority</option>
 							<option value="medium">Medium Priority</option>
 							<option value="high">High Priority</option>
@@ -372,6 +431,55 @@
 					<button onclick={addNote} class="btn primary">
 						Save {newNote.type === 'task' ? 'Task' : 'Note'}
 					</button>
+				</div>
+			</div>
+		</div>
+	{/if}
+
+	<!-- Recently Deleted Modal -->
+	{#if showDeletedItems}
+		<div class="deleted-overlay" in:fade={{ duration: 200 }} onclick={() => showDeletedItems = false}>
+			<div class="deleted-modal" in:scale={{ duration: 300 }} onclick={(e) => e.stopPropagation()}>
+				<h3>Recently Deleted</h3>
+				
+				{#if deletedItems.length === 0}
+					<div class="empty-deleted">
+						<p>No recently deleted items</p>
+					</div>
+				{:else}
+					<div class="deleted-list">
+						{#each deletedItems as item (item.id)}
+							<div class="deleted-item" in:fly={{ x: -20, duration: 300 }}>
+								<div class="deleted-info">
+									<h4>{item.title}</h4>
+									<p>{item.content.substring(0, 100)}...</p>
+									<span class="deleted-date">
+										Deleted {new Date(item.deletedAt).toLocaleDateString()}
+									</span>
+								</div>
+								<div class="deleted-actions">
+									<button 
+										class="btn restore"
+										onclick={() => restoreItem(item.id)}
+										title="Restore"
+									>
+										{@html getIcon('restore', 16)}
+									</button>
+									<button 
+										class="btn delete-permanent"
+										onclick={() => permanentlyDelete(item.id)}
+										title="Delete Permanently"
+									>
+										{@html getIcon('trash', 16)}
+									</button>
+								</div>
+							</div>
+						{/each}
+					</div>
+				{/if}
+				
+				<div class="modal-actions">
+					<button onclick={() => showDeletedItems = false} class="btn primary">Close</button>
 				</div>
 			</div>
 		</div>
@@ -632,6 +740,26 @@
 		background: rgba(102, 126, 234, 0.05);
 	}
 
+	.deleted-btn {
+		position: relative;
+	}
+
+	.deleted-count {
+		position: absolute;
+		top: -8px;
+		right: -8px;
+		background: #ef4444;
+		color: white;
+		border-radius: 50%;
+		width: 20px;
+		height: 20px;
+		font-size: 0.75rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 600;
+	}
+
 	/* Category Filter */
 	.category-filter {
 		display: flex;
@@ -666,7 +794,7 @@
 	}
 
 	/* Button Styles */
-	.btn, .add-btn {
+	.btn, .add-btn, .deleted-btn {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
@@ -689,14 +817,26 @@
 		box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
 	}
 
-	.btn.secondary {
+	.btn.secondary, .deleted-btn.secondary {
 		background: rgba(255, 255, 255, 0.1);
 		color: inherit;
 		border: 1px solid rgba(255, 255, 255, 0.2);
 	}
 
+	.btn.restore {
+		background: rgba(16, 185, 129, 0.2);
+		color: #10b981;
+		padding: 0.5rem;
+	}
+
+	.btn.delete-permanent {
+		background: rgba(239, 68, 68, 0.2);
+		color: #ef4444;
+		padding: 0.5rem;
+	}
+
 	/* Modal Styles */
-	.add-form-overlay, .profile-overlay {
+	.add-form-overlay, .profile-overlay, .deleted-overlay {
 		position: fixed;
 		top: 0;
 		left: 0;
@@ -711,7 +851,7 @@
 		padding: 1rem;
 	}
 
-	.add-form, .profile-modal {
+	.add-form, .profile-modal, .deleted-modal {
 		background: rgba(255, 255, 255, 0.05);
 		backdrop-filter: blur(30px);
 		border: 1px solid rgba(255, 255, 255, 0.1);
@@ -724,9 +864,14 @@
 	}
 
 	:global(body.light-mode) .add-form,
-	:global(body.light-mode) .profile-modal {
+	:global(body.light-mode) .profile-modal,
+	:global(body.light-mode) .deleted-modal {
 		background: rgba(255, 255, 255, 0.95);
 		border-color: rgba(0, 0, 0, 0.1);
+	}
+
+	.deleted-modal {
+		max-width: 600px;
 	}
 
 	.form-tabs {
@@ -769,6 +914,22 @@
 		transition: all 0.3s ease;
 	}
 
+	/* Blacker text for form select dropdowns */
+	.form-select.black-text {
+		color: #1e293b !important;
+		font-weight: 600;
+	}
+
+	.form-select.black-text option {
+		color: #1e293b !important;
+		background: white;
+		font-weight: 600;
+	}
+
+	:global(body.light-mode) .form-select.black-text {
+		color: #0f172a !important;
+	}
+
 	.form-textarea {
 		min-height: 120px;
 		resize: vertical;
@@ -786,11 +947,57 @@
 		gap: 1rem;
 	}
 
-	.form-actions {
+	.form-actions, .modal-actions {
 		display: flex;
 		gap: 1rem;
 		justify-content: flex-end;
 		margin-top: 1.5rem;
+	}
+
+	/* Recently deleted styles */
+	.deleted-list {
+		max-height: 400px;
+		overflow-y: auto;
+		margin-bottom: 1rem;
+	}
+
+	.deleted-item {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		padding: 1rem;
+		margin-bottom: 0.75rem;
+		background: rgba(255, 255, 255, 0.05);
+		border-radius: 12px;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.deleted-info h4 {
+		margin: 0 0 0.5rem 0;
+		font-size: 1rem;
+	}
+
+	.deleted-info p {
+		margin: 0 0 0.5rem 0;
+		font-size: 0.875rem;
+		opacity: 0.8;
+	}
+
+	.deleted-date {
+		font-size: 0.75rem;
+		opacity: 0.6;
+	}
+
+	.deleted-actions {
+		display: flex;
+		gap: 0.5rem;
+		flex-shrink: 0;
+	}
+
+	.empty-deleted {
+		text-align: center;
+		padding: 2rem;
+		opacity: 0.6;
 	}
 
 	/* Avatar Selection */
@@ -848,7 +1055,7 @@
 		opacity: 0.9;
 	}
 
-	/* Task Styles */
+	/* Task and Note Styles */
 	.tasks-grid, .notes-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
