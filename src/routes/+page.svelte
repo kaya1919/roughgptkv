@@ -33,9 +33,9 @@
 	let quoteIndex = $state(0);
 	
 	/**
-	 * @type {(HTMLSpanElement | undefined)[]}
+	 * @type {(HTMLDivElement | undefined)[]}
 	 */
-	let ripples = [];
+	let floatingElements = [];
 
 	async function createIndex() {
 		const apiKeyValue = $apiKey;
@@ -80,9 +80,8 @@
 				setTimeout(() => {
 					goto('/notes');
 					$landingPage = false;
-					for (let index = 0; index < ripples.length; index++) {
-						ripples[index]?.remove();
-					}
+					// Clean up floating elements
+					floatingElements.forEach(element => element?.remove());
 				}, 500);
 			}
 		} catch (error) {
@@ -102,19 +101,18 @@
 	 * @param {number} [x]
 	 * @param {number} [y]
 	 */
-	function createRipple(x, y) {
+	function createFloatingElement(x, y) {
 		if ($landingPage) {
-			const ripple = document.createElement('span');
-			ripple.classList.add('ripple');
+			const element = document.createElement('div');
+			element.classList.add('floating-circle');
 
-			ripple.style.width = `${x == 0 ? 855 : 186}px`;
-			ripple.style.height = `${x == 0 ? 855 : 186}px`;
+			element.style.width = `${Math.random() * 100 + 50}px`;
+			element.style.height = element.style.width;
+			element.style.left = `${x || Math.random() * 100}%`;
+			element.style.top = `${y || Math.random() * 100}%`;
 
-			ripple.style.left = `${x}%`;
-			ripple.style.top = `${y}%`;
-
-			document.body.appendChild(ripple);
-			return ripple;
+			document.body.appendChild(element);
+			return element;
 		}
 	}
 
@@ -144,17 +142,23 @@
 			$showForm = true;
 		}, 300);
 		
-		// Rotate quotes every 3 seconds
-		const quoteInterval = setInterval(rotateQuote, 3000);
+		// Rotate quotes every 4 seconds
+		const quoteInterval = setInterval(rotateQuote, 4000);
 		
 		document.getElementById('pcKey')?.addEventListener('keypress', async (ev) => {
 			if (ev.code == 'Enter') await createIndex();
 		});
 
-		ripples.push(createRipple(0, 0));
+		// Create floating elements
 		setTimeout(() => {
-			ripples.push(createRipple(7.5, 7.5));
-		}, 1500);
+			floatingElements.push(createFloatingElement(10, 20));
+		}, 500);
+		setTimeout(() => {
+			floatingElements.push(createFloatingElement(85, 75));
+		}, 1200);
+		setTimeout(() => {
+			floatingElements.push(createFloatingElement(50, 85));
+		}, 2000);
 		
 		return () => {
 			clearInterval(quoteInterval);
@@ -163,9 +167,9 @@
 </script>
 
 <div class="landing-container">
-	<!-- Hero Section with Quote -->
+	<!-- Compact Hero Section -->
 	<div class="hero-section" in:fade={{ duration: 800 }}>
-		<div class="brand-container" in:fly={{ y: -50, duration: 1000, delay: 200 }}>
+		<div class="brand-container" in:fly={{ y: -30, duration: 1000, delay: 200 }}>
 			<h1 class="brand-title">{data.title}</h1>
 			<div class="quote-container">
 				<p class="motivational-quote" key={currentQuote}>
@@ -177,7 +181,7 @@
 
 	{#if $showForm}
 		<div class="connection-container" in:fade={{ duration: 600, delay: 200 }}>
-			<div class="connection-form" in:fly={{ y: 50, duration: 800, easing: elasticOut }}>
+			<div class="connection-form" in:fly={{ y: 30, duration: 800, easing: elasticOut }}>
 				<div class="form-header">
 					<svg class="brain-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 						<path d="M12 2C13.1 2 14 2.9 14 4C14 4.74 13.6 5.39 13 5.73V7C13 8.1 13.9 9 15 9C16.1 9 17 8.1 17 7V6C17 4.9 17.9 4 19 4C20.1 4 21 4.9 21 6V7C21 8.86 20.11 10.5 18.7 11.35C18.89 11.88 19 12.43 19 13C19 15.76 16.76 18 14 18H10C7.24 18 5 15.76 5 13C5 12.43 5.11 11.88 5.3 11.35C3.89 10.5 3 8.86 3 7V6C3 4.9 3.9 4 5 4C6.1 4 7 4.9 7 6V7C7 8.1 7.9 9 9 9C10.1 9 11 8.1 11 7V5.73C10.4 5.39 10 4.74 10 4C10 2.9 10.9 2 12 2Z" fill="currentColor"/>
@@ -185,7 +189,7 @@
 					<h2>Connect to Start Your Journey</h2>
 				</div>
 				
-				<div class="form-group" in:fly={{ x: -30, duration: 500, delay: 600 }}>
+				<div class="form-group" in:fly={{ x: -20, duration: 500, delay: 600 }}>
 					<label for="pcKey">
 						<svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<path d="M6 10V8C6 5.79 7.79 4 10 4H14C16.21 4 18 5.79 18 8V10C19.1 10 20 10.9 20 12V18C20 19.1 19.1 20 18 20H6C4.9 20 4 19.1 4 18V12C4 10.9 4.9 10 6 10ZM8 8V10H16V8C16 6.9 15.1 6 14 6H10C8.9 6 8 6.9 8 8Z" fill="currentColor"/>
@@ -204,7 +208,7 @@
 				</div>
 				
 				<div class="form-row">
-					<div class="form-group" in:fly={{ x: -30, duration: 500, delay: 700 }}>
+					<div class="form-group" in:fly={{ x: -20, duration: 500, delay: 700 }}>
 						<label for="cloud">
 							<svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 								<path d="M19.35 10.04C18.67 6.59 15.64 4 12 4C9.11 4 6.6 5.64 5.35 8.04C2.34 8.36 0 10.91 0 14C0 17.31 2.69 20 6 20H19C21.76 20 24 17.76 24 15C24 12.36 21.95 10.22 19.35 10.04Z" fill="currentColor"/>
@@ -218,7 +222,7 @@
 						</select>
 					</div>
 					
-					<div class="form-group" in:fly={{ x: 30, duration: 500, delay: 700 }}>
+					<div class="form-group" in:fly={{ x: 20, duration: 500, delay: 700 }}>
 						<label for="region">
 							<svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 								<path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22S19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9S10.62 6.5 12 6.5S14.5 7.62 14.5 9S13.38 11.5 12 11.5Z" fill="currentColor"/>
@@ -241,7 +245,7 @@
 					class:connecting={$isConnecting}
 					onclick={createIndex}
 					disabled={$isConnecting}
-					in:fly={{ y: 30, duration: 600, delay: 800 }}
+					in:fly={{ y: 20, duration: 600, delay: 800 }}
 				>
 					{#if $isConnecting}
 						<span class="spinner"></span>
@@ -273,30 +277,31 @@
 <style>
 	.landing-container {
 		width: 100%;
-		min-height: 100vh;
+		height: 100vh;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		padding: 2rem;
+		padding: 1rem;
 		position: relative;
+		overflow: hidden;
 	}
 
 	.hero-section {
 		text-align: center;
-		margin-bottom: 3rem;
+		margin-bottom: 2rem;
 		z-index: 2;
 	}
 
 	.brand-container {
-		max-width: 800px;
+		max-width: 600px;
 		margin: 0 auto;
 	}
 
 	.brand-title {
-		font-size: clamp(3rem, 8vw, 6rem);
+		font-size: clamp(2.5rem, 6vw, 4rem);
 		font-weight: 800;
-		margin-bottom: 1rem;
+		margin-bottom: 0.75rem;
 		background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
 		-webkit-background-clip: text;
 		-webkit-text-fill-color: transparent;
@@ -306,15 +311,15 @@
 	}
 
 	.quote-container {
-		margin: 2rem 0;
-		min-height: 4rem;
+		margin: 1rem 0;
+		min-height: 3rem;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 	}
 
 	.motivational-quote {
-		font-size: clamp(1.2rem, 3vw, 1.8rem);
+		font-size: clamp(1rem, 2.5vw, 1.4rem);
 		font-weight: 400;
 		opacity: 0.9;
 		font-style: italic;
@@ -327,7 +332,7 @@
 	@keyframes fadeInUp {
 		from {
 			opacity: 0;
-			transform: translateY(20px);
+			transform: translateY(15px);
 		}
 		to {
 			opacity: 0.9;
@@ -335,20 +340,20 @@
 		}
 	}
 
-	/* Modern connection form with enhanced styling */
+	/* Compact connection form */
 	.connection-container {
 		width: 100%;
-		max-width: 500px;
+		max-width: 450px;
 		margin: 0 auto;
 		z-index: 2;
 	}
 
 	.connection-form {
 		background: rgba(255, 255, 255, 0.05);
-		backdrop-filter: blur(20px);
+		backdrop-filter: blur(25px);
 		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 24px;
-		padding: 3rem;
+		border-radius: 20px;
+		padding: 2rem;
 		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 		transition: all 0.3s ease;
 	}
@@ -361,25 +366,25 @@
 
 	.form-header {
 		text-align: center;
-		margin-bottom: 2rem;
+		margin-bottom: 1.5rem;
 	}
 
 	.brain-icon {
-		width: 3rem;
-		height: 3rem;
-		margin-bottom: 1rem;
+		width: 2.5rem;
+		height: 2.5rem;
+		margin-bottom: 0.75rem;
 		color: #667eea;
 	}
 
 	.form-header h2 {
-		font-size: 1.5rem;
+		font-size: 1.25rem;
 		font-weight: 600;
 		margin: 0;
 		opacity: 0.9;
 	}
 
 	.form-group {
-		margin-bottom: 1.5rem;
+		margin-bottom: 1rem;
 	}
 
 	.form-row {
@@ -393,11 +398,16 @@
 		align-items: center;
 		gap: 0.5rem;
 		margin-bottom: 0.5rem;
-		font-weight: 500;
+		font-weight: 600;
 		font-size: 0.875rem;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		opacity: 0.8;
+		opacity: 0.9;
+		color: #1e293b;
+	}
+
+	:global(body.dark-mode) label {
+		color: #e2e8f0;
 	}
 
 	.icon {
@@ -413,10 +423,10 @@
 
 	input, select {
 		width: 100%;
-		padding: 1rem 1.25rem;
+		padding: 0.875rem 1rem;
 		font-size: 1rem;
 		border: 2px solid rgba(255, 255, 255, 0.1);
-		border-radius: 12px;
+		border-radius: 10px;
 		background: rgba(255, 255, 255, 0.05);
 		color: inherit;
 		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -427,14 +437,15 @@
 	:global(body.light-mode) select {
 		background: rgba(255, 255, 255, 0.8);
 		border: 2px solid rgba(0, 0, 0, 0.1);
+		color: #1e293b;
 	}
 
 	input:focus, select:focus {
 		outline: none;
 		border-color: #667eea;
 		background: rgba(102, 126, 234, 0.1);
-		transform: translateY(-2px);
-		box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
+		transform: translateY(-1px);
+		box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
 	}
 
 	input::placeholder {
@@ -453,18 +464,18 @@
 	/* Enhanced connect button */
 	.connect-button {
 		width: 100%;
-		padding: 1.25rem 2rem;
-		font-size: 1.1rem;
+		padding: 1rem 2rem;
+		font-size: 1rem;
 		font-weight: 600;
 		border: none;
-		border-radius: 12px;
+		border-radius: 10px;
 		background: linear-gradient(135deg, #667eea, #764ba2);
 		color: white;
 		cursor: pointer;
 		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 		position: relative;
 		overflow: hidden;
-		margin-top: 1rem;
+		margin-top: 0.5rem;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -472,8 +483,8 @@
 	}
 
 	.connect-button:hover:not(:disabled) {
-		transform: translateY(-3px);
-		box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+		transform: translateY(-2px);
+		box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
 		background: linear-gradient(135deg, #5a67d8, #6b46c1);
 	}
 
@@ -500,9 +511,9 @@
 	}
 
 	.help-text {
-		margin-top: 2rem;
+		margin-top: 1.5rem;
 		text-align: center;
-		font-size: 0.875rem;
+		font-size: 0.8rem;
 		opacity: 0.7;
 	}
 
@@ -527,49 +538,68 @@
 		text-decoration: underline;
 	}
 
-	/* Enhanced ripple effects */
-	:global(.ripple) {
+	/* Enhanced floating circles with better design */
+	:global(.floating-circle) {
 		position: fixed;
-		width: 20px;
-		height: 20px;
-		z-index: 1;
-		background: rgba(26, 24, 24, 0);
-		border: 1.5vw dashed #667eea;
 		border-radius: 50%;
+		z-index: 1;
+		background: linear-gradient(45deg, 
+			rgba(102, 126, 234, 0.2), 
+			rgba(118, 75, 162, 0.2)
+		);
+		border: 2px solid rgba(102, 126, 234, 0.3);
 		transform: scale(0);
 		animation:
-			ripple-effect 1.5s linear forwards,
-			rotate-forever 8s linear infinite 1.5s;
+			floatIn 1.5s ease-out forwards,
+			gentleFloat 15s ease-in-out infinite 1.5s,
+			fadeOut 1s ease-out 8s forwards;
 	}
 
-	:global(body.light-mode) :global(.ripple) {
-		border-color: #764ba2;
+	:global(body.light-mode) :global(.floating-circle) {
+		background: linear-gradient(45deg, 
+			rgba(102, 126, 234, 0.15), 
+			rgba(118, 75, 162, 0.15)
+		);
+		border-color: rgba(102, 126, 234, 0.2);
 	}
 
-	@keyframes ripple-effect {
+	@keyframes floatIn {
 		to {
-			transform: scale(0.33);
-			opacity: 0.6;
+			transform: scale(1);
+			opacity: 0.8;
 		}
 	}
 
-	@keyframes rotate-forever {
-		from {
-			transform: rotate(0deg) scale(0.33);
+	@keyframes gentleFloat {
+		0%, 100% {
+			transform: scale(1) rotate(0deg);
 		}
+		25% {
+			transform: scale(1.1) rotate(90deg);
+		}
+		50% {
+			transform: scale(0.9) rotate(180deg);
+		}
+		75% {
+			transform: scale(1.05) rotate(270deg);
+		}
+	}
+
+	@keyframes fadeOut {
 		to {
-			transform: rotate(360deg) scale(0.33);
+			transform: scale(0);
+			opacity: 0;
 		}
 	}
 
 	/* Responsive design */
 	@media (max-width: 768px) {
 		.landing-container {
-			padding: 1rem;
+			padding: 0.5rem;
 		}
 
 		.connection-form {
-			padding: 2rem;
+			padding: 1.5rem;
 		}
 
 		.form-row {
@@ -577,7 +607,7 @@
 		}
 
 		.brand-title {
-			font-size: 3rem;
+			font-size: 2.5rem;
 		}
 
 		.help-text p {
@@ -592,8 +622,9 @@
 			transform: none;
 		}
 		
-		:global(.ripple) {
+		:global(.floating-circle) {
 			animation: none;
+			opacity: 0.3;
 		}
 		
 		.motivational-quote {
