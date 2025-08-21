@@ -14,15 +14,6 @@
 	let darkModeToggleSrc = $state('/moon.svg');
 	let currentTheme = $state('dark');
 	let isConnected = $state(false);
-	
-	/**
-	 * @type {HTMLImageElement}
-	 */
-	let plug;
-	/**
-	 * @type {HTMLImageElement}
-	 */
-	let socket;
 
 	function logout() {
 		// Clear all stored data
@@ -38,9 +29,6 @@
 		
 		// Reset connection state
 		isConnected = false;
-		plug.classList.remove('connected');
-		socket.classList.remove('connected');
-		
 		goto('/');
 	}
 
@@ -60,11 +48,7 @@
 	}
 
 	function connectAnimation() {
-		if (plug && socket) {
-			plug.classList.add('connected');
-			socket.classList.add('connected');
-			isConnected = true;
-		}
+		isConnected = true;
 	}
 
 	function checkConnection() {
@@ -75,7 +59,6 @@
 			const isRecentConnection = (Date.now() - parseInt(connectionTime)) < 24 * 60 * 60 * 1000;
 			if (isRecentConnection) {
 				isConnected = true;
-				connectAnimation();
 			}
 		}
 	}
@@ -92,17 +75,11 @@
 		darkModeToggleSrc = savedTheme === 'dark' ? '/moon.svg' : '/sun.svg';
 		
 		document.getElementById('dark-mode-toggle')?.addEventListener('click', toggleTheme);
-		
-		if (plug && socket) {
-			plug.addEventListener('click', logout);
-			socket.addEventListener('click', logout);
-		}
-		
 		checkConnection();
 	});
 </script>
 
-<!-- Enhanced background with animated gradients -->
+<!-- Enhanced background with improved dark mode colors -->
 <div class="background-container">
 	<div class="gradient-orb orb-1"></div>
 	<div class="gradient-orb orb-2"></div>
@@ -144,19 +121,13 @@
 	</div>
 </nav>
 
-<!-- Connection Elements -->
-<div class="connection-elements">
-	<img bind:this={plug} class="plug" src="/plug.svg" alt="plug" />
-	<img bind:this={socket} class="socket" src="/socket.svg" alt="socket" />
-</div>
-
 <!-- Main Content -->
 <main class="main-content" in:fade={{ duration: 400, delay: 100 }}>
 	{@render children()}
 </main>
 
 <style>
-	/* Global styles and theme system */
+	/* Global styles and improved theme system */
 	:global(body) {
 		margin: 0;
 		padding: 0;
@@ -168,7 +139,7 @@
 	}
 
 	:global(body.dark-mode) {
-		background: #0a0a0a;
+		background: #1a1a2e;
 		color: #e2e8f0;
 	}
 
@@ -177,7 +148,7 @@
 		color: #1e293b;
 	}
 
-	/* Enhanced animated background */
+	/* Enhanced animated background with improved colors */
 	.background-container {
 		position: fixed;
 		top: 0;
@@ -191,45 +162,45 @@
 	.gradient-orb {
 		position: absolute;
 		border-radius: 50%;
-		filter: blur(40px);
-		opacity: 0.6;
-		animation: float 20s ease-in-out infinite;
+		filter: blur(60px);
+		opacity: 0.4;
+		animation: gentleFloat 25s ease-in-out infinite;
 	}
 
 	.orb-1 {
-		width: 300px;
-		height: 300px;
+		width: 400px;
+		height: 400px;
 		background: linear-gradient(45deg, #667eea, #764ba2);
-		top: -150px;
-		left: -150px;
+		top: -200px;
+		left: -200px;
 		animation-delay: 0s;
 	}
 
 	.orb-2 {
-		width: 400px;
-		height: 400px;
+		width: 350px;
+		height: 350px;
 		background: linear-gradient(45deg, #f093fb, #f5576c);
-		top: 20%;
-		right: -200px;
-		animation-delay: -5s;
+		top: 30%;
+		right: -175px;
+		animation-delay: -8s;
 	}
 
 	.orb-3 {
-		width: 350px;
-		height: 350px;
+		width: 300px;
+		height: 300px;
 		background: linear-gradient(45deg, #4facfe, #00f2fe);
-		bottom: -175px;
-		left: 30%;
-		animation-delay: -10s;
+		bottom: -150px;
+		left: 25%;
+		animation-delay: -16s;
 	}
 
 	.orb-4 {
 		width: 250px;
 		height: 250px;
 		background: linear-gradient(45deg, #43e97b, #38f9d7);
-		top: 60%;
-		right: 20%;
-		animation-delay: -15s;
+		top: 70%;
+		right: 15%;
+		animation-delay: -24s;
 	}
 
 	.animated-mesh {
@@ -239,38 +210,48 @@
 		width: 100%;
 		height: 100%;
 		background: 
-			radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-			radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
-			radial-gradient(circle at 40% 40%, rgba(120, 200, 255, 0.2) 0%, transparent 50%);
-		animation: meshMove 30s ease-in-out infinite;
+			radial-gradient(circle at 25% 75%, rgba(120, 119, 198, 0.2) 0%, transparent 50%),
+			radial-gradient(circle at 75% 25%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+			radial-gradient(circle at 50% 50%, rgba(120, 200, 255, 0.1) 0%, transparent 50%);
+		animation: meshShift 40s ease-in-out infinite;
 	}
 
 	:global(body.light-mode) .gradient-orb {
-		opacity: 0.3;
+		opacity: 0.2;
+		filter: blur(80px);
 	}
 
 	:global(body.light-mode) .animated-mesh {
-		opacity: 0.5;
+		opacity: 0.3;
 	}
 
-	@keyframes float {
+	@keyframes gentleFloat {
 		0%, 100% { 
 			transform: translateY(0px) translateX(0px) rotate(0deg); 
 		}
-		33% { 
-			transform: translateY(-30px) translateX(20px) rotate(120deg); 
+		25% { 
+			transform: translateY(-20px) translateX(15px) rotate(90deg); 
 		}
-		66% { 
-			transform: translateY(20px) translateX(-15px) rotate(240deg); 
+		50% { 
+			transform: translateY(10px) translateX(-10px) rotate(180deg); 
+		}
+		75% { 
+			transform: translateY(-15px) translateX(20px) rotate(270deg); 
 		}
 	}
 
-	@keyframes meshMove {
+	@keyframes meshShift {
 		0%, 100% { 
 			transform: rotate(0deg) scale(1); 
+			filter: hue-rotate(0deg);
 		}
-		50% { 
-			transform: rotate(180deg) scale(1.1); 
+		33% { 
+			transform: rotate(120deg) scale(1.05); 
+			filter: hue-rotate(60deg);
+		}
+		66% { 
+			transform: rotate(240deg) scale(0.95); 
+			filter: hue-rotate(120deg);
 		}
 	}
 
@@ -372,74 +353,12 @@
 		background: rgba(0, 0, 0, 0.1);
 	}
 
-	/* Connection elements */
-	.connection-elements {
-		position: fixed;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		z-index: 100;
-		pointer-events: none;
-	}
-
-	.plug, .socket {
-		pointer-events: all;
-		transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-		cursor: pointer;
-	}
-
-	.plug {
-		width: 52vw;
-		height: auto;
-		position: absolute;
-		left: -8%;
-		bottom: 2.95vw;
-		filter: none;
-		max-width: 400px;
-	}
-
-	:global(body.dark-mode) .plug {
-		filter: invert(1) brightness(0.9);
-	}
-
-	:global(body.light-mode) .plug {
-		filter: brightness(0.8);
-	}
-
-	:global(.plug.connected) {
-		left: 0%;
-		transform: scale(1.02);
-	}
-
-	.socket {
-		width: 50vw;
-		height: auto;
-		bottom: 2.15vw;
-		position: absolute;
-		right: -10%;
-		filter: none;
-		max-width: 380px;
-	}
-
-	:global(body.dark-mode) .socket {
-		filter: invert(1) brightness(0.9);
-	}
-
-	:global(body.light-mode) .socket {
-		filter: brightness(0.8);
-	}
-
-	:global(.socket.connected) {
-		right: 0%;
-		transform: scale(1.02);
-	}
-
 	/* Main content area */
 	.main-content {
 		position: relative;
 		z-index: 10;
 		min-height: 100vh;
-		padding-top: 80px; /* Account for fixed navigation */
+		padding-top: 80px;
 	}
 
 	/* Responsive design */
@@ -471,14 +390,6 @@
 			padding-top: 70px;
 		}
 
-		:global(.plug.connected) {
-			left: -0.1%;
-		}
-
-		:global(.socket.connected) {
-			right: -0.1%;
-		}
-
 		.gradient-orb {
 			width: 200px !important;
 			height: 200px !important;
@@ -499,18 +410,6 @@
 		
 		* {
 			transition-duration: 0.1s !important;
-		}
-	}
-
-	/* High contrast mode support */
-	@media (prefers-contrast: high) {
-		.navigation {
-			background: rgba(255, 255, 255, 0.95);
-			border-bottom: 2px solid;
-		}
-		
-		:global(body.dark-mode) .navigation {
-			background: rgba(0, 0, 0, 0.95);
 		}
 	}
 </style>
